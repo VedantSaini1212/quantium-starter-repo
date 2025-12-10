@@ -9,23 +9,28 @@ df2 = pd.read_csv("data/daily_sales_data_2.csv")
 df = pd.concat([df0, df1, df2])
 df = df[df["product"] == "pink morsel"]
 df['price'] = df['price'].str[1:].astype(float)
-df["sales"] = df["quantity"] * df["quantity"]
+df["sales"] = df["price"] * df["quantity"]
 df.drop(columns=["price", "quantity", "product"], axis=1, inplace=True)
 
 df.to_csv("formatted.csv", index=False)
 
-fig = px.line(df, x='date', y = 'sales')
-fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
-app = Dash()
+external_stylesheets = [
+    "https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
+]
+
+app = Dash(external_stylesheets=external_stylesheets)
 app.layout = html.Div(children=[
-  html.H1(children='Line graph visualiser'),
-  dcc.RadioItems(
+  html.H1(children='Line graph visualiser', className='title'),
+  html.Div(children = [
+    dcc.RadioItems(
                 ['North', 'East', 'West', 'South', 'All'],
                 'All',
-                id='region',
-                inline=True
+                id='region',  
+                labelStyle={"marginBottom": "1rem"},
+                inputStyle={"marginRight": "2px"},
+                className='form-check'
             ),
-  dcc.Graph(id="sales-graph")])
+  dcc.Graph(id="sales-graph")], className='graph-div')])
 
 @callback(
 Output('sales-graph', 'figure'),
@@ -33,14 +38,14 @@ Input('region', 'value'))
 
 def update_graph(region):
   if region == 'All':
-    fig = px.line(df, x='date', y = 'sales')
-    fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
+    fig = px.line(df, x='date', y = 'sales', title='Pink Morsel Sales')
+    fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red", name = "Jan 15, 2021")
   else:
     filtered = df[df['region'] == region.lower()]
-    fig = px.line(filtered, x='date', y = 'sales')
+    fig = px.line(filtered, x='date', y = 'sales', title=f'Pink Morsel Sales in {region}')
     fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
 
   return fig
 
 
-app.run(debug=True)
+app.run()
