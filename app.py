@@ -1,5 +1,5 @@
 import pandas as pd
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
 import csv
 df0 = pd.read_csv("data/daily_sales_data_0.csv")
@@ -17,5 +17,30 @@ df.to_csv("formatted.csv", index=False)
 fig = px.line(df, x='date', y = 'sales')
 fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
 app = Dash()
-app.layout = html.Div(children=[html.H1(children='Line graph visualiser'),dcc.Graph(figure=fig)])
-app.run()
+app.layout = html.Div(children=[
+  html.H1(children='Line graph visualiser'),
+  dcc.RadioItems(
+                ['North', 'East', 'West', 'South', 'All'],
+                'All',
+                id='region',
+                inline=True
+            ),
+  dcc.Graph(id="sales-graph")])
+
+@callback(
+Output('sales-graph', 'figure'),
+Input('region', 'value'))
+
+def update_graph(region):
+  if region == 'All':
+    fig = px.line(df, x='date', y = 'sales')
+    fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
+  else:
+    filtered = df[df['region'] == region.lower()]
+    fig = px.line(filtered, x='date', y = 'sales')
+    fig.add_vline(x='2021-01-15', line_width=3, line_dash="dash", line_color="red")
+
+  return fig
+
+
+app.run(debug=True)
